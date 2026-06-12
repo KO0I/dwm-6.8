@@ -1,9 +1,0 @@
-*.d
-*.o
-*.so
-tags
-*.elf
-*.ko
-*.lo
-*.old*
-*.log
