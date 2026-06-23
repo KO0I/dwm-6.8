@@ -35,6 +35,7 @@
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xproto.h>
+#include <X11/Xresource.h>
 #include <X11/extensions/Xrender.h>
 #include <X11/Xutil.h>
 #ifdef XINERAMA
@@ -74,6 +75,13 @@ typedef union {
 	float f;
 	const void *v;
 } Arg;
+
+typedef struct {
+	const char *name;
+	const char *class;
+	const char **dst;
+	char *value;
+} ResourcePref;
 
 typedef struct {
 	unsigned int click;
@@ -185,6 +193,7 @@ static void grabkeys(void);
 static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
+static void loadxresources(void);
 static void manage(Window w, XWindowAttributes *wa);
 static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
@@ -197,7 +206,9 @@ static Client *nexttiled(Client *c);
 static void pop(Client *c);
 static void propertynotify(XEvent *e);
 static void quit(const Arg *arg);
+static void rebuildschemes(void);
 static Monitor *recttomon(int x, int y, int w, int h);
+static void reloadcolors(const Arg *arg);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
@@ -206,6 +217,7 @@ static void run(void);
 static void scan(void);
 static int sendevent(Client *c, Atom proto);
 static void sendmon(Client *c, Monitor *m);
+static void setclientborders(void);
 static void setclientstate(Client *c, long state);
 static void setfocus(Client *c);
 static void setfullscreen(Client *c, int fullscreen);
@@ -1037,6 +1049,74 @@ drawbars(void)
 }
 
 void
+loadxresources(void)
+{
+	char *resm, *type;
+	unsigned int i;
+	size_t len;
+	Atom actual_type;
+	int actual_format;
+	unsigned long nitems, bytes_after;
+	unsigned char *prop = NULL;
+	XrmDatabase db;
+	XrmValue value;
+
+	XrmInitialize();
+	resm = NULL;
+	if (XGetWindowProperty(dpy, root, XA_RESOURCE_MANAGER, 0L, 100000000L, False,
+		XA_STRING, &actual_type, &actual_format, &nitems, &bytes_after, &prop) == Success
+	&& actual_type == XA_STRING && actual_format == 8)
+		resm = (char *)prop;
+	if (!resm && !(resm = XResourceManagerString(dpy)))
+		return;
+	if (!(db = XrmGetStringDatabase(resm))) {
+		if (prop)
+			XFree(prop);
+		return;
+	}
+
+	for (i = 0; i < LENGTH(resources); i++) {
+		if (!XrmGetResource(db, resources[i].name, resources[i].class, &type, &value)
+		|| !value.addr)
+			continue;
+		len = strlen(value.addr);
+		free(resources[i].value);
+		resources[i].value = ecalloc(len + 1, sizeof(char));
+		memcpy(resources[i].value, value.addr, len);
+		*resources[i].dst = resources[i].value;
+	}
+	XrmDestroyDatabase(db);
+	if (prop)
+		XFree(prop);
+}
+
+void
+rebuildschemes(void)
+{
+	unsigned int alphas[] = { OPAQUE, baralpha, borderalpha };
+	unsigned int i;
+
+	if (!scheme)
+		scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
+	for (i = 0; i < LENGTH(colors); i++) {
+		if (scheme[i])
+			drw_scm_free(drw, scheme[i], 3);
+		scheme[i] = drw_scm_create(drw, colors[i], alphas, 3);
+	}
+}
+
+void
+reloadcolors(const Arg *arg)
+{
+	(void)arg;
+
+	loadxresources();
+	rebuildschemes();
+	setclientborders();
+	drawbars();
+}
+
+void
 enternotify(XEvent *e)
 {
 	Client *c;
@@ -1745,6 +1825,18 @@ sendmon(Client *c, Monitor *m)
 }
 
 void
+setclientborders(void)
+{
+	Client *c;
+	Monitor *m;
+
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			XSetWindowBorder(dpy, c->win,
+				scheme[borderscheme(c, c == selmon->sel && m == selmon)][ColBorder].pixel);
+}
+
+void
 setclientstate(Client *c, long state)
 {
 	long data[] = { state, None };
@@ -1882,7 +1974,6 @@ setsmfact(const Arg *arg)
 void
 setup(void)
 {
-	int i;
 	XSetWindowAttributes wa;
 	Atom utf8string;
 	struct sigaction sa;
@@ -1928,10 +2019,8 @@ setup(void)
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
 	/* init appearance */
-	unsigned int alphas[] = { OPAQUE, baralpha, borderalpha };
-	scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
-	for (i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], alphas, 3);
+	loadxresources();
+	rebuildschemes();
 	/* init bars */
 	updatebars();
 	updatestatus();

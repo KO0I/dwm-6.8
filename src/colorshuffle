@@ -1,0 +1,206 @@
+#!/bin/sh
+
+# Purpose:
+# Randomize colors cyclically for new xterms
+#
+# Method:
+# Write out each background color to a file
+# As each color is used, randomize so as to pick from remaining colors
+# Once every color is picked, re-set the file contents
+
+
+f="$HOME/colorshuffle.log"
+colors_picked=0;
+
+BG0=false
+BG1=false
+BG2=false
+BG3=false
+BG4=false
+BG5=false
+BG6=false
+BG7=false
+
+color_seen=0
+NUM_COLORS=8
+randomize_finished=false
+
+TRNS=100 # opaque
+CRS=#CCBBFF
+ROLL=0
+
+#echo "\n-- Before ------"
+#echo "BG0 $BG0"
+#echo "BG1 $BG1"
+#echo "BG2 $BG2"
+#echo "BG3 $BG3"
+#echo "BG4 $BG4"
+#echo "BG5 $BG5"
+#echo "BG6 $BG6"
+#echo "-----------------"
+
+# note what colors have been generated previously
+if [ -f "$f" -a -r "$f" -a -s "$f" ] 
+then
+  while read line
+  do
+    color_seen=$line
+    #echo "color seen in file: `eval color_seen`$color_seen \n"
+    if [ "$color_seen" -eq 0 ]; then BG0=true; fi
+    if [ "$color_seen" -eq 1 ]; then BG1=true; fi
+    if [ "$color_seen" -eq 2 ]; then BG2=true; fi
+    if [ "$color_seen" -eq 3 ]; then BG3=true; fi
+    if [ "$color_seen" -eq 4 ]; then BG4=true; fi
+    if [ "$color_seen" -eq 5 ]; then BG5=true; fi
+    if [ "$color_seen" -eq 6 ]; then BG6=true; fi
+    if [ "$color_seen" -eq 7 ]; then BG7=true; fi
+  done < "$f"
+fi
+
+#echo "\n-- After ------"
+#echo "BG0 $BG0"
+#echo "BG1 $BG1"
+#echo "BG2 $BG2"
+#echo "BG3 $BG3"
+#echo "BG4 $BG4"
+#echo "BG5 $BG5"
+#echo "BG6 $BG6"
+#echo "-----------------"
+if [ "$BG0" = true ] && [ "$BG1" = true ] && [ "$BG2" = true ] && [ "$BG3" =\
+  true ] && [ "$BG4" = true ] && [ "$BG5" = true ] && [ "$BG6" = true ] &&  [ "$BG7" = true ]
+then 
+  BG0=false
+  BG1=false
+  BG2=false
+  BG3=false
+  BG4=false
+  BG5=false
+  BG6=false
+  BG7=false
+  # save last line
+  echo $(tail -1 "$f") > $f
+fi
+#echo "\n-- After ------"
+#echo "BG0 $BG0"
+#echo "BG1 $BG1"
+#echo "BG2 $BG2"
+#echo "BG3 $BG3"
+#echo "BG4 $BG4"
+#echo "BG5 $BG5"
+#echo "BG6 $BG6"
+#echo "-----------------"
+
+
+# find a color that is NOT in that list
+#ROLL=$((RANDOM%NUM_COLORS))
+#echo "random found pre: $randomize_finished"
+while [ !${randomize_finished} ]
+do
+  ROLL=$(od -An -N2 -tu2 /dev/urandom)
+  ROLL=$((ROLL%NUM_COLORS))
+  #echo "Roll $ROLL"
+  if [ "$BG0" = false ]; then if [ "$ROLL" -eq 0 ]; then randomize_finished=true; fi fi
+  if [ "$BG1" = false ]; then if [ "$ROLL" -eq 1 ]; then randomize_finished=true; fi; fi
+  if [ "$BG2" = false ]; then if [ "$ROLL" -eq 2 ]; then randomize_finished=true; fi; fi
+  if [ "$BG3" = false ]; then if [ "$ROLL" -eq 3 ]; then randomize_finished=true; fi; fi
+  if [ "$BG4" = false ]; then if [ "$ROLL" -eq 4 ]; then randomize_finished=true; fi; fi
+  if [ "$BG5" = false ]; then if [ "$ROLL" -eq 5 ]; then randomize_finished=true; fi; fi
+  if [ "$BG6" = false ]; then if [ "$ROLL" -eq 6 ]; then randomize_finished=true; fi; fi
+  if [ "$BG7" = false ]; then if [ "$ROLL" -eq 7 ]; then randomize_finished=true; fi; fi
+
+ 
+  #if the color has not been seen yet, we are done
+  
+  if [ "$randomize_finished" = true ]
+  then 
+    #echo "novel random value found: $ROLL, finished:$randomize_finished"
+    break
+  #else
+  #  echo "$ROLL has NOT been found $BG0 $BG1 $BG2 $BG3 $BG4 $BG5 $BG6"
+  fi
+
+done
+
+#echo "random found post while loop: $randomize_finished"
+#echo "\n\ncolor chosen is $ROLL\n"
+
+# map roll to a color background
+case $ROLL in 
+  0)
+   BG=\#141720
+   #BG=\#2A2807
+   ;;
+  1)
+   #BG=\#1E1210
+   BG=\#1E3130
+   ;;
+  2)
+   BG=\#2D4050
+   ;;
+  3)
+   BG=\#3A323A
+   ;;
+  4)
+   BG=\#382b2b
+   ;;
+  5)
+   #BG=rgba:2222/4444/2222/$TRNS
+   #BG=\#373210
+   BG=\#3a323a
+   ;;
+  6)
+   #
+   BG=\#122022
+   ;;
+  7)
+   #
+   BG=\#323030
+   ;;
+  *)
+   #BG=rgba:2222/2222/2222/$TRNS
+   BG=\#555555
+   ;;
+ esac
+
+# write out to file
+if [ -f "$f" -a -r "$f" -a -s "$f" ] 
+then 
+  if  [ $(cat "$f" | grep -m 1 '0') ] && 
+      [ $(cat "$f" | grep -m 1 '1') ] && 
+      [ $(cat "$f" | grep -m 1 '2') ] && 
+      [ $(cat "$f" | grep -m 1 '3') ] && 
+      [ $(cat "$f" | grep -m 1 '4') ] && 
+      [ $(cat "$f" | grep -m 1 '5') ] && 
+      [ $(cat "$f" | grep -m 1 '6') ] && 
+      [ $(cat "$f" | grep -m 1 '7') ]; 
+    then 
+      rm "$f" 
+      BG0=0
+      BG1=0
+      BG2=0
+      BG3=0
+      BG4=0
+      BG5=0
+      BG6=0
+      BG7=0
+    else 
+      echo "$ROLL" >> "$f"
+  fi 
+  else 
+    echo "$ROLL" > "$f"
+fi
+
+
+# Launch an xterm with desired options
+
+ #urxvt -bg [$TRNS]$BG
+ #xterm -bg $BG -fa xft:Terminus:size=8:antialias=true
+ #xterm -bg $BG -fa xft:Terminus:size=10:antialias=true -cr $CRS
+ #xterm -bg $BG -fa 'Terminus (TTF):size=12:antialias=false' -cr $CRS
+
+# xterm -bg $BG -fn '-xos4-terminus-medium-*-normal-*-14-120-72-72-c-80-iso10646-1' -cr $CRS;
+ #xterm -bg $BG -fn '-xos4-terminus-medium-*-normal-*-14-140-72-72-c-80-iso10646-1' -cr $CRS;
+ #xterm -bg $BG -fn '-xos4-terminus-medium-*-normal-*-*-180-*-*-c-*-iso10646-1' -cr $CRS;
+exec kitty --override background="$BG" --override cursor="$CRS"
+# xterm -bg $BG -fn '-xos4-terminus-medium-*-normal-*-*-180-*-*-c-*-iso10646-1' -cr $CRS;
+ #export BG=rgba:2222/2222/2222/FFFF

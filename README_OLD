@@ -2,6 +2,15 @@ dwm - dynamic window manager
 ============================
 dwm is an extremely fast, small, and dynamic window manager for X.
 
+ADDITIONS: see patches/applied_ok
+
+nametag
+pertag
+columns
+flt color
+smfact
+hide vacant
+
 
 Requirements
 ------------
@@ -18,21 +27,15 @@ necessary as root):
 
     make clean install
 
+If you are going to use the default bluegray color scheme it is highly
+recommended to also install the bluegray files shipped in the dextra package.
+
 
 Running dwm
 -----------
 Add the following line to your .xinitrc to start dwm using startx:
 
     exec dwm
-
-To test this tree in Xephyr without installing it:
-
-    make -C src xephyr
-
-This runs dwm as the xinit client and Xephyr as the xinit server. To override
-the nested display or size:
-
-    make -C src xephyr XEPHYR_DISPLAY=:3 XEPHYR_SCREEN=1280x720
 
 In order to connect dwm to a specific display, make sure that
 the DISPLAY environment variable is set correctly, e.g.:

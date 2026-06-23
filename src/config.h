@@ -25,6 +25,22 @@ static const char *colors[][3]      = {
 	[SchemeFloatNorm] = { col_gray3, col_gray1, col_cyan  },
 	[SchemeFloatSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
+static ResourcePref resources[] = {
+	{ "dwm.normfgcolor",      "Dwm.Normfgcolor",      &colors[SchemeNorm][ColFg],      NULL },
+	{ "dwm.normbgcolor",      "Dwm.Normbgcolor",      &colors[SchemeNorm][ColBg],      NULL },
+	{ "dwm.normbordercolor",  "Dwm.Normbordercolor",  &colors[SchemeNorm][ColBorder],  NULL },
+	{ "dwm.selfgcolor",       "Dwm.Selfgcolor",       &colors[SchemeSel][ColFg],       NULL },
+	{ "dwm.selbgcolor",       "Dwm.Selbgcolor",       &colors[SchemeSel][ColBg],       NULL },
+	{ "dwm.selbordercolor",   "Dwm.Selbordercolor",   &colors[SchemeSel][ColBorder],   NULL },
+	{ "dwm.urgfgcolor",       "Dwm.Urgfgcolor",       &colors[SchemeUrg][ColFg],       NULL },
+	{ "dwm.urgbgcolor",       "Dwm.Urgbgcolor",       &colors[SchemeUrg][ColBg],       NULL },
+	{ "dwm.urgbordercolor",   "Dwm.Urgbordercolor",   &colors[SchemeUrg][ColBorder],   NULL },
+	{ "dwm.floatfgcolor",     "Dwm.Floatfgcolor",     &colors[SchemeFloatNorm][ColFg], NULL },
+	{ "dwm.floatbgcolor",     "Dwm.Floatbgcolor",     &colors[SchemeFloatNorm][ColBg], NULL },
+	{ "dwm.floatbordercolor", "Dwm.Floatbordercolor", &colors[SchemeFloatNorm][ColBorder], NULL },
+	{ "dwm.floatselbgcolor",  "Dwm.Floatselbgcolor",  &colors[SchemeFloatSel][ColBg],  NULL },
+	{ "dwm.floatselbordercolor", "Dwm.Floatselbordercolor", &colors[SchemeFloatSel][ColBorder], NULL },
+};
 
 /* tagging */
 #define MAX_TAGNAME_LEN 14
@@ -78,17 +94,17 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *dmenucalc[] = { "/bin/sh", "-c", "xsel -o | dmenu_run -p Calculate: | xargs echo | bc 2>&1 | dmenu -p Answer: | xsel -i", NULL };
-static const char *termcmd[]  = { "/home/patrick/scripts/colorshuffle", NULL };
-static const char *browscmd[] = { "/home/patrick/build/surf-git/src/surf/surf", "duckduckgo.com", NULL };
+static const char *termcmd[]  = { "/bin/sh", "-c", "$HOME/scripts/colorshuffle", NULL };
+//static const char *browscmd[] = SHCMD("/home/$USER/build/surf-git/src/surf/surf duckduckgo.com");
 static const char *emailcmd[] = { "thunderbird", NULL };
 static const char *lockcmd[]  = { "xscreensaver-command", "-lock", NULL };
-static const char *taskcmd[]  = { "/home/patrick/scripts/todo", NULL };
+static const char *taskcmd[]  = { "/bin/sh", "-c", "/home/$USER/scripts/todo", NULL };
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
-	{ MODKEY|ShiftMask,             XK_w,      spawn,          {.v = browscmd } },
+//	{ MODKEY|ShiftMask,             XK_w,      spawn,          {.v = browscmd } },
 	{ MODKEY|ShiftMask,             XK_e,      spawn,          {.v = emailcmd } },
 	{ MODKEY|ShiftMask,             XK_minus,  spawn,          {.v = lockcmd } },
 	{ MODKEY|ShiftMask,             XK_k,      spawn,          {.v = taskcmd } },
@@ -122,6 +138,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
 	{ MODKEY,                       XK_semicolon, spawn,       {.v = dmenucalc } },
+	{ MODKEY,                       XK_F5,     reloadcolors,   {0} },
 	{ MODKEY,                       XK_n,      nametag,        {0} },
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
